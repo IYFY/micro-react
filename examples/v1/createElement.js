@@ -20,17 +20,14 @@ function render(node, container) {
       ? document.createTextNode("")
       : document.createElement(node.type)
 
-  for (const key in node.props) {
-    if (Object.prototype.hasOwnProperty.call(node.props, key)) {
-      const value = node.props[key]
-
-      if (key === "children") {
-        value?.length > 0 && value.forEach((item) => render(item, el))
-        continue
-      }
-      el[key] = value
+  Object.entries(node.props).forEach(([key, value]) => {
+    if (key === "children") {
+      value.forEach((child) => render(child, el))
+      return
     }
-  }
+    el[key] = value
+  })
+
   container.append(el)
 }
 

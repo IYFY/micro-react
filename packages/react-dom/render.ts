@@ -7,12 +7,14 @@ export function render(node: nodeType, container: Element) {
   } else {
     el = document.createElement(node.type)
     for (const key in node.props) {
-      if (key === "children") {
-        const value = node.props[key]
-        value.forEach((child) => render(child, el!))
-        continue
+      if (Object.prototype.hasOwnProperty.call(node.props, key)) {
+        if (key === "children") {
+          const value = node.props[key]
+          value.forEach((child) => render(child, el!))
+          continue
+        }
+        el.setAttribute(key, node.props[key])
       }
-      el.setAttribute(key, node.props[key])
     }
   }
   container.append(el)
