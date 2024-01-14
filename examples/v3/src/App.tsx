@@ -11,7 +11,7 @@ function Hi() {
     }
     return (
       <ul>
-        {...new Array(10).fill(0).map((_item, index) => {
+        {...new Array(5).fill(0).map((_item, index) => {
           return (
             <li key={`${key}_${index}`}>
               <span>{`${key}_${index}`}</span>

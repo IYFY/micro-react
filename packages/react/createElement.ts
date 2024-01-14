@@ -9,7 +9,17 @@ export default function createElement(
     type,
     props: {
       ...props,
-      children,
+      children: children.map((child) =>
+        Object.prototype.toString.call(child) === "[object Object]"
+          ? child
+          : {
+              type: "TEXT_NODE",
+              props: {
+                nodeValue: child,
+                children: [],
+              },
+            },
+      ),
     },
   }
 }
