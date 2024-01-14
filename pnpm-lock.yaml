@@ -44,6 +44,13 @@ importers:
         version: 5.0.8
 
   examples/v3:
+    dependencies:
+      react:
+        specifier: workspace:*
+        version: link:../../packages/react
+      react-dom:
+        specifier: workspace:*
+        version: link:../../packages/react-dom
     devDependencies:
       typescript:
         specifier: ^5.2.2
