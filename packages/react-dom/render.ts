@@ -1,6 +1,7 @@
 import { nodeType, fiberType } from "types"
 
 let nextUnitOfWork: fiberType | undefined | null
+let rootFiber: fiberType | null // 根 fiber 节点
 
 export function render(node: nodeType, container: Element) {
   nextUnitOfWork = {
@@ -14,6 +15,7 @@ export function render(node: nodeType, container: Element) {
     index: 0,
     dom: container,
   }
+  rootFiber = nextUnitOfWork
 }
 
 function createDom(work: fiberType) {
@@ -40,7 +42,6 @@ function performUnitOfWork(work: fiberType) {
     const el = createDom(work)
     work.dom = el
     updateProps(el, work)
-    ;(work.return!.dom as Element).append(el)
   }
 
   // 2、设置链表指针
@@ -80,6 +81,26 @@ function workLoop(deadline: IdleDeadline) {
     shouldYield = deadline.timeRemaining() < 1
   }
 
+  if (!nextUnitOfWork && rootFiber) {
+    // 统一 commit
+    commitRoot()
+  }
+
   requestIdleCallback(workLoop)
 }
+
+function commitRoot() {
+  if (!rootFiber) return
+  commitWork(rootFiber.child!)
+  rootFiber = null
+}
+// 挂载递归
+function commitWork(fiber: fiberType) {
+  if (!fiber) return
+  const dom = fiber!.return!.dom as Element
+  dom.append(fiber.dom!)
+  commitWork(fiber.child!)
+  commitWork(fiber.sibling!)
+}
+
 requestIdleCallback(workLoop)
