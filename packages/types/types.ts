@@ -1,26 +1,29 @@
-export type typeType = string
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type propsType = Record<string, any> | null
-export type childrenType = nodeType[]
+export type domType = Text | Element
 
+// 使用接口声明函数类型
+export type typeType = string | FC
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type childrenType = (nodeType | any)[]
+
+export type propsType = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any
+  children: childrenType
+}
+
+export interface FC<T = propsType> {
+  (props?: T): Element
+}
 export type nodeType = {
   type: typeType
-  props: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any
-    children: childrenType
-  }
+  props: propsType
 }
 
 export type fiberType = {
   type: typeType
-  props: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]: any
-    children: childrenType
-  }
+  props: propsType
   /** 当前 element 对象创建 dom 元素 */
-  dom: Text | Element | null
+  dom: domType | null
 
   // 单链表树结构
   return: fiberType | null

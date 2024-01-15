@@ -1,10 +1,10 @@
-import { nodeType, fiberType } from "types"
+import { nodeType, fiberType, FC, childrenType } from "types"
 
 let nextUnitOfWork: fiberType | undefined | null
 let rootFiber: fiberType | null // 根 fiber 节点
 
-export function render(node: nodeType, container: Element) {
-  nextUnitOfWork = {
+function createFiber(node: nodeType): fiberType {
+  return {
     type: node.type,
     props: node.props,
 
@@ -13,15 +13,20 @@ export function render(node: nodeType, container: Element) {
     sibling: null,
     child: null,
     index: 0,
-    dom: container,
+    dom: null,
   }
-  rootFiber = nextUnitOfWork
 }
 
 function createDom(work: fiberType) {
   return work.type === "TEXT_NODE"
     ? document.createTextNode(work.props.nodeValue)
-    : document.createElement(work.type)
+    : document.createElement(work.type as string)
+}
+
+export function render(node: nodeType, container: Element) {
+  nextUnitOfWork = createFiber(node)
+  nextUnitOfWork.dom = container
+  rootFiber = nextUnitOfWork
 }
 
 function updateProps(dom: Text | Element, work: fiberType) {
@@ -33,32 +38,14 @@ function updateProps(dom: Text | Element, work: fiberType) {
   })
 }
 
-function performUnitOfWork(work: fiberType) {
-  if (work.child?.dom) {
-    return work.sibling ?? work.return
-  }
-
-  if (!work.dom) {
-    const el = createDom(work)
-    work.dom = el
-    updateProps(el, work)
-  }
-
-  // 2、设置链表指针
-  const children = work.props.children
+// 2、设置链表指针
+function initChildren(work: fiberType, children: childrenType) {
   let previousSibling: fiberType
+
   children.forEach((child, index) => {
-    const fiber: fiberType = {
-      //
-      type: child.type,
-      props: child.props,
-      dom: null,
-      // 单链表树结构
-      return: work,
-      sibling: null,
-      child: null,
-      index: index,
-    }
+    const fiber: fiberType = createFiber(child)
+    fiber.return = work
+    fiber.index = index
 
     if (index === 0) {
       work.child = fiber
@@ -67,9 +54,43 @@ function performUnitOfWork(work: fiberType) {
     }
     previousSibling = fiber
   })
+}
+
+function updateFunctionComponent(work: fiberType) {
+  const fun = work.type as FC
+  const result = fun(work.props)
+  const children = Array.isArray(result) ? result : [result]
+  initChildren(work, children)
+}
+
+function updateHostComponent(work: fiberType) {
+  if (!work.dom) {
+    const el = (work.dom = createDom(work))
+    updateProps(el, work)
+  }
+  initChildren(work, work.props.children)
+}
+
+function performUnitOfWork(work: fiberType) {
+  const isFunctionComponent = typeof work.type === "function"
+
+  if (isFunctionComponent) {
+    updateFunctionComponent(work)
+  } else {
+    updateHostComponent(work)
+  }
 
   // 3、返回下一个 work
-  return work.child ?? work.sibling ?? work.return
+  if (work.child) {
+    return work.child
+  }
+
+  let newReturn: fiberType | null = work
+  while (newReturn && !newReturn!.sibling) {
+    newReturn = newReturn.return
+  }
+
+  return newReturn?.sibling
 }
 
 function workLoop(deadline: IdleDeadline) {
@@ -94,11 +115,19 @@ function commitRoot() {
   commitWork(rootFiber.child!)
   rootFiber = null
 }
+
 // 挂载递归
 function commitWork(fiber: fiberType) {
   if (!fiber) return
-  const dom = fiber!.return!.dom as Element
-  dom.append(fiber.dom!)
+
+  let parentFiber: fiberType | null | undefined = fiber?.return
+
+  while (!parentFiber?.dom) {
+    parentFiber = parentFiber?.return
+  }
+
+  fiber.dom && (parentFiber.dom as Element).append(fiber.dom!)
+
   commitWork(fiber.child!)
   commitWork(fiber.sibling!)
 }
