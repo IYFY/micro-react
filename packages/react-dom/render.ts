@@ -112,24 +112,18 @@ function workLoop(deadline: IdleDeadline) {
 
 function commitRoot() {
   if (!rootFiber) return
-  commitWork(rootFiber.child!)
+  commitWork(rootFiber, rootFiber.child!)
   rootFiber = null
 }
 
 // 挂载递归
-function commitWork(fiber: fiberType) {
+function commitWork(parentFiber: fiberType, fiber?: fiberType | null) {
   if (!fiber) return
-
-  let parentFiber: fiberType | null | undefined = fiber?.return
-
-  while (!parentFiber?.dom) {
-    parentFiber = parentFiber?.return
-  }
 
   fiber.dom && (parentFiber.dom as Element).append(fiber.dom!)
 
-  commitWork(fiber.child!)
-  commitWork(fiber.sibling!)
+  commitWork(fiber.dom ? fiber : parentFiber, fiber.child!)
+  commitWork(parentFiber, fiber.sibling!)
 }
 
 requestIdleCallback(workLoop)
