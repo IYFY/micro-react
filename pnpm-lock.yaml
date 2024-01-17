@@ -75,6 +75,22 @@ importers:
         specifier: ^5.0.8
         version: 5.0.8
 
+  examples/v5:
+    dependencies:
+      react:
+        specifier: workspace:*
+        version: link:../../packages/react
+      react-dom:
+        specifier: workspace:*
+        version: link:../../packages/react-dom
+    devDependencies:
+      typescript:
+        specifier: ^5.2.2
+        version: 5.2.2
+      vite:
+        specifier: ^5.0.8
+        version: 5.0.8
+
   packages/react:
     dependencies:
       types:

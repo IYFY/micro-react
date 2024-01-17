@@ -32,6 +32,9 @@ export function render(node: nodeType, container: Element) {
 function updateProps(dom: Text | Element, work: fiberType) {
   if (work.type === "TEXT_NODE") return
   Object.entries(work.props).forEach(([key, value]) => {
+    if (key.startsWith("on") && typeof value === "function") {
+      dom.addEventListener(key.replace(/^on/, "").toLowerCase(), value)
+    }
     if (key !== "children") {
       ;(dom as Element).setAttribute(key, value)
     }
