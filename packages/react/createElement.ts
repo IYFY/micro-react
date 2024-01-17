@@ -9,17 +9,21 @@ export default function createElement(
     type,
     props: {
       ...props,
-      children: children.map((child) =>
-        Object.prototype.toString.call(child) === "[object Object]"
-          ? child
-          : {
-              type: "TEXT_NODE",
-              props: {
-                nodeValue: child,
-                children: [],
-              },
+      children: children.flatMap((child) => {
+        if (Array.isArray(child)) {
+          return child
+        }
+        if (["string", "number"].includes(typeof child)) {
+          return {
+            type: "TEXT_NODE",
+            props: {
+              nodeValue: child,
+              children: [],
             },
-      ),
+          }
+        }
+        return child
+      }),
     },
   }
 }

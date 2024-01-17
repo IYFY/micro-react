@@ -1,4 +1,4 @@
-export type domType = Text | Element
+export type domType = Text | HTMLElement
 
 // 使用接口声明函数类型
 export type typeType = string | FC
@@ -30,4 +30,8 @@ export type fiberType = {
   sibling: fiberType | null
   child: fiberType | null
   index: number
+
+  //
+  effectTag: "Placement" | "Update" | "Deletion"
+  alternate: fiberType | null
 }
