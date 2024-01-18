@@ -43,12 +43,12 @@ let switchFlag = true
 const App = () => {
   const handle = () => {
     switchFlag = !switchFlag
-    console.log(switchFlag)
-
     ReactDom.update()
   }
+
   return (
     <div>
+      {/* 渲染切换 */}
       <button onClick={handle}>切换</button>
       {switchFlag ? (
         <>
@@ -63,7 +63,11 @@ const App = () => {
           <p>p 元素 2</p>
         </>
       )}
-      <ListCom />
+      {/* 判断渲染 */}
+      <div>{!switchFlag && <ListCom />}</div>
+      <div>{undefined && <ListCom />}</div>
+      <div>{null && <ListCom />}</div>
+      <div>{0 && <ListCom />}</div>
     </div>
   )
 }

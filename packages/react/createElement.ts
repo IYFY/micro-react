@@ -10,8 +10,13 @@ export default function createElement(
     props: {
       ...props,
       children: children.flatMap((child) => {
-        if (Array.isArray(child)) {
-          return child
+        // 解决判断渲染
+        if (
+          typeof child === "boolean" ||
+          child === undefined ||
+          child === null
+        ) {
+          return []
         }
         if (["string", "number"].includes(typeof child)) {
           return {
