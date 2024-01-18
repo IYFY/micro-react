@@ -18,6 +18,7 @@ export default function createElement(
         ) {
           return []
         }
+
         if (["string", "number"].includes(typeof child)) {
           return {
             type: "TEXT_NODE",
@@ -27,6 +28,15 @@ export default function createElement(
             },
           }
         }
+
+        // 解决 <><> 情况
+        if (
+          Object.prototype.toString.call(child) === "[object Object]" &&
+          !child.type
+        ) {
+          return child.props.children
+        }
+
         return child
       }),
     },

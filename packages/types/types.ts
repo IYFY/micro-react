@@ -1,7 +1,7 @@
 export type domType = Text | HTMLElement
 
 // 使用接口声明函数类型
-export type typeType = string | FC
+export type typeType = undefined | string | FC
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type childrenType = (nodeType | any)[]
 
@@ -30,6 +30,10 @@ export type fiberType = {
   sibling: fiberType | null
   child: fiberType | null
   index: number
+
+  //
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  state: any
 
   //
   effectTag: "Placement" | "Update" | "Deletion"

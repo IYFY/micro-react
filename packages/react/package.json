@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "types": "workspace:*"
+    "types": "workspace:*",
+    "react-dom": "workspace:*"
   },
   "keywords": [],
   "author": "",

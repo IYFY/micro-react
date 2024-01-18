@@ -1,8 +1,9 @@
 import { nodeType, fiberType, FC, childrenType, propsType } from "types"
 
 let nextUnitOfWork: fiberType | undefined | null
-let workInRootFiber: fiberType | null // 根 fiber 节点
-let currentRootFiber: fiberType | null
+let workInRootFiber: fiberType | null // 工作根 fiber 节点
+// let currentRootFiber: fiberType | null
+let workInFiber: fiberType | null // 更新 fiber 节点
 let deletions: fiberType[] = []
 
 function createFiber(node: nodeType): fiberType {
@@ -16,6 +17,9 @@ function createFiber(node: nodeType): fiberType {
     child: null,
     index: 0,
     dom: null,
+
+    // 组件状态
+    state: null,
 
     //
     effectTag: "Placement",
@@ -49,10 +53,25 @@ function updateProps(
 
   addKeys.forEach((key) => {
     if (key.startsWith("on") && typeof newProps[key] === "function") {
-      oldProps &&
-        oldProps[key] &&
-        dom.removeEventListener(key.slice(2).toLowerCase(), oldProps[key])
-      dom.addEventListener(key.slice(2).toLowerCase(), newProps[key])
+      // 将 HTMLElement 类型转换为包含非只读键的类型
+      // type NonReadonlyKeys<T> = {
+      //   [K in keyof T]-?: WritableKeys<T, K>
+      // }[keyof T]
+
+      // type WritableKeys<T, K extends keyof T> = {
+      //   [P in K]: T[P]
+      // }
+      interface MyElement extends HTMLElement {
+        [key: string]: unknown
+      }
+
+      if (oldProps && oldProps[key]) {
+        ;(dom as MyElement)[key.toLowerCase()] = null
+        // dom.removeEventListener(key.slice(2).toLowerCase(), oldProps[key])
+      }
+
+      ;(dom as MyElement)[key.toLowerCase()] = newProps[key]
+      // dom.addEventListener(key.slice(2).toLowerCase(), newProps[key])
       return
     }
 
@@ -79,16 +98,15 @@ export function render(node: nodeType, container: HTMLElement) {
 }
 
 export function update() {
-  const node: nodeType = {
-    type: currentRootFiber!.type,
-    props: currentRootFiber!.props,
+  const currentFiber = workInFiber
+  return () => {
+    workInRootFiber = {
+      ...currentFiber,
+    } as fiberType
+    workInRootFiber.alternate = currentFiber
+
+    nextUnitOfWork = workInRootFiber
   }
-
-  workInRootFiber = createFiber(node)
-  workInRootFiber.dom = currentRootFiber!.dom
-  workInRootFiber.alternate = currentRootFiber
-
-  nextUnitOfWork = workInRootFiber
 }
 
 // 2、设置链表指针
@@ -132,6 +150,7 @@ function reconcileChildren(work: fiberType, children: childrenType) {
 }
 
 function updateFunctionComponent(work: fiberType) {
+  workInFiber = work
   // **
   const fun = work.type as FC
   const result = fun(work.props)
@@ -149,7 +168,6 @@ function updateHostComponent(work: fiberType) {
 
 function performUnitOfWork(work: fiberType) {
   const isFunctionComponent = typeof work.type === "function"
-  // debugger
 
   if (isFunctionComponent) {
     updateFunctionComponent(work)
@@ -175,7 +193,10 @@ function workLoop(deadline: IdleDeadline) {
 
   while (!shouldYield && nextUnitOfWork) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
-
+    //
+    if (workInRootFiber?.sibling?.type === nextUnitOfWork?.type) {
+      nextUnitOfWork = null
+    }
     shouldYield = deadline.timeRemaining() < 1
   }
 
@@ -196,7 +217,7 @@ function commitRoot() {
 
   // 添加变更
   commitWork(workInRootFiber, workInRootFiber.child!)
-  currentRootFiber = workInRootFiber
+  // currentRootFiber = workInRootFiber
   workInRootFiber = null
 }
 

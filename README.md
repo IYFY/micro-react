@@ -16,6 +16,7 @@ Ts + Monorepo
 - [x] 任务调度器 + Fiber链表 (分帧)
 - [x] commit 
 - [x] function Component
-- [ ] 事件处理
+- [x] 事件处理
+- [x] DOM 更新删除
 - [ ] useState
 - [ ] useEffect

@@ -11,13 +11,14 @@ const PCom = () => {
 }
 const list: string[] = []
 const ListCom = () => {
+  const update = ReactDom.update()
   const addHandler = () => {
     list.push("React")
-    ReactDom.update()
+    update()
   }
   const removeHandler = () => {
     list.pop()
-    ReactDom.update()
+    update()
   }
   return (
     <div>
@@ -41,9 +42,10 @@ const ListCom = () => {
 }
 let switchFlag = true
 const App = () => {
+  const update = ReactDom.update()
   const handle = () => {
     switchFlag = !switchFlag
-    ReactDom.update()
+    update()
   }
 
   return (
