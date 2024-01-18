@@ -3,6 +3,7 @@ import { nodeType, fiberType, FC, childrenType, propsType } from "types"
 let nextUnitOfWork: fiberType | undefined | null
 let workInRootFiber: fiberType | null // 根 fiber 节点
 let currentRootFiber: fiberType | null
+let deletions: fiberType[] = []
 
 function createFiber(node: nodeType): fiberType {
   return {
@@ -94,6 +95,7 @@ export function update() {
 function reconcileChildren(work: fiberType, children: childrenType) {
   let previousSibling: fiberType
   let oldFiber = work.alternate?.child
+
   children?.forEach((child, index) => {
     const fiber: fiberType = createFiber(child)
     fiber.return = work
@@ -105,6 +107,8 @@ function reconcileChildren(work: fiberType, children: childrenType) {
       fiber.dom = oldFiber!.dom
       fiber.alternate = oldFiber!
       fiber.effectTag = "Update"
+    } else {
+      oldFiber && deletions.push(oldFiber) // 删除 变更对应的节点
     }
 
     //  当前 children 遍历对应的旧 fiber， 通过 oldFiber 的 sibling 获取
@@ -119,6 +123,12 @@ function reconcileChildren(work: fiberType, children: childrenType) {
     }
     previousSibling = fiber!
   })
+
+  while (oldFiber) {
+    // 删除 多余兄弟节点
+    oldFiber && deletions.push(oldFiber)
+    oldFiber = oldFiber?.sibling
+  }
 }
 
 function updateFunctionComponent(work: fiberType) {
@@ -179,6 +189,12 @@ function workLoop(deadline: IdleDeadline) {
 
 function commitRoot() {
   if (!workInRootFiber) return
+
+  // 删除
+  deletions.forEach(commitDelete)
+  deletions = []
+
+  // 添加变更
   commitWork(workInRootFiber, workInRootFiber.child!)
   currentRootFiber = workInRootFiber
   workInRootFiber = null
@@ -190,14 +206,22 @@ function commitWork(parentFiber: fiberType, fiber?: fiberType | null) {
 
   if (fiber.effectTag === "Update") {
     updateProps(fiber.dom!, fiber.props, fiber.alternate?.props)
-  } else if (fiber.effectTag === "Deletion") {
-    console.log("Deletion")
   } else if (fiber.effectTag === "Placement") {
     fiber.dom && (parentFiber.dom as HTMLElement).append(fiber.dom!)
   }
 
   commitWork(fiber.dom ? fiber : parentFiber, fiber.child!)
   commitWork(parentFiber, fiber.sibling!)
+}
+
+function commitDelete(fiber: fiberType) {
+  if (!fiber) return
+
+  if (fiber.dom) {
+    fiber.dom.remove()
+  } else {
+    fiber.child && commitDelete(fiber.child)
+  }
 }
 
 requestIdleCallback(workLoop)
